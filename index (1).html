@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1d4ed8">
+<link rel="icon" href="icon-192.png">
+<title>منصة الرياضيات</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--tx:#14213d;--mut:#5b6b85;--pr:#1d4ed8;--ok:#15803d;--bad:#b91c1c;--wn:#b45309;--bd:#d9e2ef;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f172a;--card:#1e293b;--tx:#e8eefc;--mut:#9fb0cc;--pr:#60a5fa;--ok:#4ade80;--bad:#f87171;--wn:#fbbf24;--bd:#334155}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f172a;--card:#1e293b;--tx:#e8eefc;--mut:#9fb0cc;--pr:#60a5fa;--ok:#4ade80;--bad:#f87171;--wn:#fbbf24;--bd:#334155}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Cairo,system-ui,sans-serif;max-width:560px;margin-inline:auto;padding:12px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+input,select,textarea,button{font:inherit;width:100%;box-sizing:border-box;padding:10px;margin:4px 0;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+button{background:var(--pr);color:#fff;border:0;font-weight:700;cursor:pointer}
+button.g{background:transparent;color:var(--pr);border:1px solid var(--pr)}
+button.ok{background:var(--ok)}button.bad{background:var(--bad)}button.wn{background:var(--wn)}
+button:disabled{opacity:.45}
+nav{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;align-items:center}
+nav button{width:auto;white-space:nowrap;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+nav button.on{background:var(--pr);color:#fff}
+.row{display:flex;gap:6px;align-items:end}.row>*{flex:1}
+.bd{display:none;background:#dc2626;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:.75rem;margin-inline-start:6px;text-align:center;padding:0 4px}
+.al.gn{background:#15803d}
+.gc{color:#fff;border-radius:14px;padding:14px;margin-bottom:12px}
+.al{background:#b91c1c;color:#fff;border-radius:14px;padding:14px;margin-bottom:12px}.al a{color:#fff}
+.pf{flex:0 0 auto!important;padding:10px;background:var(--bd);border-radius:10px;direction:ltr;margin:4px 0}
+a.btn{display:block;flex:1;text-align:center;background:var(--ok);color:#fff;padding:10px;border-radius:10px;text-decoration:none;font-weight:700;margin:4px 0}
+.cnt{text-align:center;color:var(--mut)}.cnt span{display:block;font-size:2rem;font-weight:700;color:var(--tx)}
+.rp{color:var(--ok)}small{color:var(--mut)}img{max-width:100%;border-radius:10px;margin-top:6px}a{color:var(--pr)}
+.h{border-top:1px solid var(--bd);padding-top:8px;margin-top:8px}
+#t{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));inset-inline:0;margin:auto;width:max-content;max-width:90%;background:#111;color:#fff;padding:10px 16px;border-radius:20px;opacity:0;transition:.3s;pointer-events:none}
+</style></head><body>
+<div id="app"><div class="c">جاري التحميل…</div></div><div id="t"></div>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+<script>
+const SB='https://pnwfvytzngdhagkplmdz.supabase.co',KEY='sb_publishable_pT_M5-vCLqNFjeRmRE9u7A_XKl4DL0K';
+const $=s=>document.querySelector(s),app=$('#app');
+let me=null,C={},mode='s',GS=[],GRW=[],GX={};
+const H=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dg=s=>s.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const num=s=>dg(s).replace(/\D/g,'');
+const norm=s=>{s=num(s);if(!s)return'';if(s.startsWith('20')&&s.length>=12)return s;return '20'+s.replace(/^0+/,'')};
+const T=m=>{const t=$('#t');t.textContent=m;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,2200)};
+addEventListener('unhandledrejection',e=>{const t=$('#t');t.textContent='خطأ: '+((e.reason&&e.reason.message)||e.reason);t.style.opacity=1});
+const code=()=>String(100000+crypto.getRandomValues(new Uint32Array(1))[0]%900000);
+const GR=['رابعة ابتدائي','خامسة ابتدائي','سادسة ابتدائي','أولى إعدادي','تانية إعدادي','تالتة إعدادي'];
+const opts=GR.map((g,i)=>`<option value="${i}">${g}</option>`).join('');
+const LS={get(){try{return JSON.parse(localStorage.getItem('mp')||'null')}catch(e){return null}},set(v){try{localStorage.setItem('mp',JSON.stringify(v))}catch(e){}},clear(){try{localStorage.removeItem('mp')}catch(e){}}};
+const logout=()=>{LS.clear();location.reload()};
+const sortAt=l=>l;
+
+/* ---------- الاتصال بـ Supabase ---------- */
+async function rpc(fn,a={}){
+  const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(a)});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok){if(j&&j.message==='auth'){LS.clear();location.reload()}throw new Error((j&&j.message)||'تعذر الاتصال')}
+  return j;
+}
+const R=(fn,a={})=>rpc(fn,{t:me.token,...a});
+
+/* ---------- الملفات ---------- */
+const FILE_IN=id=>`<input type="file" id="${id}" multiple accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt">`;
+const rd=f=>new Promise(r=>{const x=new FileReader();x.onload=()=>r(x.result);x.readAsDataURL(f)});
+async function shrink(f){
+  if(!f.type.startsWith('image/'))return rd(f);
+  const u=await rd(f),im=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=u});
+  const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7);
+}
+async function upl(id){
+  const out=[];
+  for(const f of [...$('#'+id).files]){
+    if(f.size>3e6){T('الملف '+f.name+' أكبر من 3 ميجا');continue}
+    const d=await shrink(f),fid=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    await R('put_file',{p_id:fid,p_data:d});
+    out.push({fid,name:f.name,img:d.startsWith('data:image')});
+  }
+  return out;
+}
+const att=l=>(l||[]).map(a=>`<div class="at" data-f="${H(a.fid)}" data-i="${a.img?1:0}" data-name="${H(a.name)}">${a.img?'جاري تحميل الصورة…':`<a href="#" onclick="dl(this.parentNode);return false">📎 ${H(a.name)}</a>`}</div>`).join('');
+const getD=el=>R('get_file',{p_id:el.dataset.f});
+function loadAt(){document.querySelectorAll('.at[data-i="1"]:not([data-ok])').forEach(el=>{el.dataset.ok=1;getD(el).then(d=>{el.innerHTML=`<img src="${d}" alt="">`})})}
+const toBlob=d=>{const[h,b]=d.split(','),m=(h.match(/:(.*?);/)||[,''])[1],s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Blob([u],{type:m})};
+async function dl(el){const d=await getD(el),a=document.createElement('a');a.href=URL.createObjectURL(toBlob(d));a.download=el.dataset.name;a.click()}
+
+/* ---------- الدخول ---------- */
+const setMode=m=>{mode=m;login()};
+function login(){app.innerHTML=`<div class="c"><h2>تسجيل الدخول</h2><nav><button class="${mode=='s'?'on':''}" onclick="setMode('s')">طالب / ولي أمر</button><button class="${mode=='a'?'on':''}" onclick="setMode('a')">المشرف</button></nav><input id="ph" placeholder="رقم التليفون" inputmode="tel"><input id="cd" placeholder="${mode=='s'?'الكود (6 أرقام)':'كلمة السر'}" type="password" ${mode=='s'?'inputmode="numeric"':''} autocapitalize="off" autocomplete="off"><label style="display:block;margin:6px 0"><input type="checkbox" id="rm" checked style="width:auto"> تذكّرني على هذا الجهاز</label><button onclick="doLogin()">دخول</button></div>`}
+async function doLogin(){
+  const rm=$('#rm').checked,adm=mode=='a',ph=adm?num($('#ph').value):norm($('#ph').value),cd=dg($('#cd').value.trim());
+  const j=await rpc('app_login',{p_phone:ph,p_code:cd,p_mode:adm?'staff':'student'});
+  if(j.error)return T(j.error);
+  rm?LS.set({mode,ph:$('#ph').value,cd:$('#cd').value}):LS.clear();
+  me=j;return adm?admin():stu();
+}
+{const sv=LS.get();if(sv)mode=sv.mode;login();if(sv){$('#ph').value=sv.ph;$('#cd').value=sv.cd;doLogin()}}
+
+/* ---------- المشرف ---------- */
+const TABS={add:['إضافة طالب',vAdd],edit:['تعديل',vEdit],msg:['التعليقات',vMsg],fol:['المتابعة',vFol],hw:['الواجبات',vHw],gr:['درجات الامتحان',vGr],sup:['المشرفين',vSup]};
+function admin(t='fol'){
+  app.innerHTML=`<nav>${Object.entries(TABS).filter(([k])=>k!='sup'||me.main).map(([k,v])=>`<button class="${k==t?'on':''}" onclick="admin('${k}')">${v[0]}<span class="bd" id="b_${k}"></span></button>`).join('')}<button class="g" onclick="logout()">خروج</button></nav><div id="v"></div>`;
+  TABS[t][1]();badge();
+}
+async function badge(){const L=await R('staff_comments'),n=L.filter(m=>!m.reply).length,b=$('#b_msg');if(b){b.textContent=n||'';b.style.display=n?'inline-block':'none'}}
+function vAdd(){$('#v').innerHTML=`<div class="c"><input id="n" placeholder="اسم الطالب"><select id="g">${opts}</select><div class="row"><span class="pf">+20</span><input id="p" placeholder="رقم الطالب" inputmode="tel"></div><div class="row"><span class="pf">+20</span><input id="pp" placeholder="رقم ولي الأمر (اختياري)" inputmode="tel"></div><div class="row"><input id="k" readonly placeholder="الكود"><button class="g" onclick="$('#k').value=code()">توليد كود</button></div><button onclick="save()">حفظ البيانات</button></div>`}
+async function save(){
+  const p=norm($('#p').value),n=$('#n').value.trim(),k=$('#k').value;
+  if(!p||!n||!k)return T('كمّل الاسم والرقم وولّد الكود');
+  await R('staff_add_student',{p_name:n,p_grade:+$('#g').value,p_phone:p,p_pp:norm($('#pp').value),p_code:k});
+  T('تم الحفظ');vAdd();
+}
+function vEdit(){$('#v').innerHTML=`<div class="c"><input id="q" placeholder="ابحث برقم التليفون" inputmode="tel"><button onclick="find()">بحث</button><div id="res"></div></div>`}
+async function find(){
+  const d=await R('staff_find_student',{p_phone:norm($('#q').value)});
+  if(!d)return $('#res').innerHTML='مفيش طالب بالرقم ده';
+  $('#res').innerHTML=`<p><b>${H(d.name)}</b> — ${GR[d.grade]}</p><input id="nk" value="${H(d.code)}"><div class="row"><button class="g" onclick="$('#nk').value=code()">كود جديد</button><button onclick="upd('${d.id}')">حفظ الكود</button></div><small>لو نسي: ابعتله الكود الظاهر زي ما هو.</small>`;
+}
+async function upd(id){await R('staff_set_code',{p_id:id,p_code:$('#nk').value});T('تم تعديل الكود')}
+
+async function bcForm(){
+  const A=await R('staff_anns');
+  return `<div class="c"><b>رسالة جماعية</b><div>${GR.map((g,i)=>`<label style="display:block"><input type="checkbox" style="width:auto" class="bg" value="${i}"> ${g}</label>`).join('')}<label style="display:block"><input type="checkbox" style="width:auto" onchange="document.querySelectorAll('.bg').forEach(x=>x.checked=this.checked)"> كل المراحل</label></div><select id="bty"><option value="n">🟢 رسالة عادية</option><option value="a">🔴 رسالة تنبيه</option></select><textarea id="bt" rows="3" placeholder="اكتب الرسالة (مثلاً تنبيه بامتحان)"></textarea>${FILE_IN('bf')}<button onclick="bcSend()">إرسال للمراحل المختارة</button>${A.map(a=>`<div class="h"><small>${a.type=='n'?'🟢':'🔴'} ${(a.grades||[]).map(i=>GR[i]).join('، ')}</small><p>${H(a.text)}</p>${att(a.files)}<button class="bad" onclick="bcDel('${a.id}')">حذف</button></div>`).join('')}</div>`;
+}
+async function bcSend(){
+  const g=[...document.querySelectorAll('.bg:checked')].map(x=>+x.value),t=$('#bt').value.trim();
+  if(!g.length||!t)return T('اختار مرحلة واحدة على الأقل واكتب الرسالة');
+  const files=await upl('bf');
+  await R('staff_add_ann',{p_grades:g,p_text:t,p_type:$('#bty').value,p_files:files});T('تم الإرسال');vMsg();
+}
+async function bcDel(id){await R('staff_del_ann',{p_id:id});T('تم الحذف');vMsg()}
+async function vMsg(){
+  const L=await R('staff_comments');
+  $('#v').innerHTML=await bcForm()+(L.length?L.map(m=>`<div class="c"><b>${H(m.name)}</b> <small>${GR[m.grade]}${m.hw?' — '+H(m.hw):''}</small><p>${H(m.text)}</p>${att(m.files)}${m.reply?`<p class="rp">ردك: ${H(m.reply)}</p>`:''}${att(m.rfiles)}<div class="row"><input id="r_${m.id}" placeholder="اكتب ردك"><button onclick="rep('${m.id}')">رد</button></div>${FILE_IN('rf_'+m.id)}<button class="bad" onclick="delC('${m.id}')">حذف الرسالة</button></div>`).join(''):'<div class="c">مفيش تعليقات</div>');loadAt();
+}
+async function rep(id){const v=$('#r_'+id).value.trim(),rf=await upl('rf_'+id);if(!v&&!rf.length)return;await R('staff_reply',{p_id:id,p_reply:v||'(مرفقات)',p_rfiles:rf});T('تم الرد');vMsg();badge()}
+async function delC(id){await R('staff_del_comment',{p_id:id});T('تم الحذف');vMsg();badge()}
+
+function vFol(g=0){$('#v').innerHTML=`<div class="c"><select id="fg" onchange="ld()">${opts}</select></div><div id="ls"></div>`;$('#fg').value=g;ld()}
+async function ld(){
+  const L=await R('staff_students',{p_grade:+$('#fg').value});C={};L.forEach(s=>C[s.id]=s);
+  $('#ls').innerHTML=L.length?L.map(s=>{const w=864e5-(Date.now()-new Date(s.last_unpaid||0).getTime()),ok=w<=0;
+    return `<div class="c"><b style="cursor:pointer;color:var(--pr)" onclick="openS('${s.id}')">${H(s.name)} ›</b><div class="row"><button class="ok" onclick="mk('${s.id}','p')">حضور</button><button class="bad" onclick="mk('${s.id}','absent')">غياب</button><button class="wn" ${ok?'':'disabled'} onclick="mk('${s.id}','unpaid')">${ok?'لم يدفع':'بعد '+Math.ceil(w/36e5)+' س'}</button></div><details><summary>عرض التفاصيل</summary><div class="row"><label>غياب<input type="number" min="0" id="a_${s.id}" value="${s.absent}"></label><label>لم يدفع<input type="number" min="0" id="u_${s.id}" value="${s.unpaid}"></label><button onclick="sv('${s.id}')">حفظ</button></div></details></div>`}).join(''):'<div class="c">مفيش طلاب في المرحلة دي</div>';
+}
+function openS(id){
+  const s=C[id];
+  $('#v').innerHTML=`<button class="g" onclick="vFol(${s.grade})">› رجوع</button><div class="c"><h3>${H(s.name)}</h3><p>${GR[s.grade]}<br>رقم الطالب: <span dir="ltr">+${H(s.phone)}</span>${s.parent_phone?`<br>رقم ولي الأمر: <span dir="ltr">+${H(s.parent_phone)}</span>`:''}<br>الكود: <b>${H(s.code)}</b><br>غياب: ${s.absent} — لم يدفع: ${s.unpaid}</p><a class="btn" target="_blank" href="https://wa.me/${H(s.phone)}">إرسال رسالة واتساب للطالب</a>${s.parent_phone?`<a class="btn" target="_blank" href="https://wa.me/${H(s.parent_phone)}">إرسال رسالة واتساب لولي الأمر</a>`:''}</div>`;
+}
+async function mk(id,t){if(t=='p')return T('تم تسجيل الحضور');await R('staff_mark',{p_id:id,p_kind:t});T('تم');ld()}
+async function sv(id){await R('staff_set_counts',{p_id:id,p_absent:+$('#a_'+id).value||0,p_unpaid:+$('#u_'+id).value||0});T('تم الحفظ');ld()}
+
+function vHw(){$('#v').innerHTML=`<div class="c"><select id="hg">${opts}</select><input id="ht" placeholder="عنوان الواجب (اختياري)">${FILE_IN('hf')}<button onclick="send()">إرسال</button></div><div id="hl"></div>`;hl()}
+async function send(){
+  if(!$('#hf').files.length)return T('اختار ملف الأول');
+  T('جاري الرفع…');const fs=await upl('hf');
+  await R('staff_add_hw',{p_grade:+$('#hg').value,p_title:$('#ht').value.trim()||'واجب جديد',p_files:fs});T('تم الإرسال');vHw();
+}
+async function hl(){
+  const L=await R('staff_hw');
+  $('#hl').innerHTML=L.map(h=>`<div class="c"><b>${H(h.title)}</b> <small>${GR[h.grade]}</small>${att(h.files)}<button class="bad" onclick="dh('${h.id}')">حذف من جميع المستويات</button></div>`).join('');loadAt();
+}
+async function dh(id){await R('staff_del_hw',{p_id:id});T('تم الحذف');hl()}
+
+/* ---------- الدرجات ---------- */
+const nm=s=>String(s).replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim().toLowerCase();
+const gcol=(s,m)=>{const p=s/m;return p>=.75?'#15803d':p>=.5?'#c2410c':'#b91c1c'};
+function vGr(){
+  $('#v').innerHTML=`<div class="c"><b>إرسال درجات الامتحان</b><select id="gg">${opts}</select><input id="gn" placeholder="اسم الامتحان"><input id="gm" type="number" placeholder="الدرجة النهائية (مثلاً 30)" inputmode="numeric"><input type="file" id="gf" accept=".xlsx,.xls,.csv"><small>الملف: عمود للاسم وعمود للدرجة (وعمود التليفون اختياري).</small><button onclick="gRead()">قراءة الملف</button></div><div id="gp"></div><div id="gl"></div>`;gList();
+}
+async function gRead(){
+  const f=$('#gf').files[0],mx=+$('#gm').value,ex=$('#gn').value.trim();
+  if(!f||!mx||!ex)return T('اكتب اسم الامتحان والدرجة النهائية واختار الملف');
+  if(!window.XLSX)return T('مكتبة Excel مش متاحة');
+  const wb=/\.csv$/i.test(f.name)?XLSX.read(await f.text(),{type:'string'}):XLSX.read(await f.arrayBuffer(),{type:'array'});
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  const h=(rows[0]||[]).map(nm);
+  let ci=h.findIndex(x=>/اسم|name/.test(x)),cg=h.findIndex(x=>/درج|grade|score|mark/.test(x)),cp=h.findIndex(x=>/تليفون|موبايل|هاتف|phone|mobile/.test(x));
+  if(ci<0)ci=0;if(cg<0)cg=ci==0?1:0;
+  GS=await R('staff_students',{p_grade:+$('#gg').value});GX={ex,mx};
+  GRW=rows.slice(1).filter(r=>String(r[ci]).trim()&&String(r[cg]).trim()!==''&&!isNaN(+r[cg])).map(r=>{
+    const n=String(r[ci]).trim(),k=nm(n),ph=cp>=0?norm(String(r[cp])):'';
+    let m=ph?GS.filter(s=>s.phone===ph||s.parent_phone===ph):[];
+    if(m.length!=1)m=GS.filter(s=>nm(s.name)===k);
+    if(m.length!=1)m=GS.filter(s=>{const t=nm(s.name);return t.startsWith(k)||k.startsWith(t)});
+    return{n,sc:+r[cg],sid:m.length==1?m[0].id:''};
+  });
+  if(!GRW.length)return T('ملقيتش بيانات في الملف');
+  $('#gp').innerHTML=`<div class="c"><b>مراجعة قبل الإرسال</b><br><small>${GRW.filter(r=>r.sid).length} مطابق من ${GRW.length}. صلّح اللي بالحدود الحمرا أو اختار "تجاهل".</small>${GRW.map((r,i)=>`<div class="h"><b>${H(r.n)}</b> — ${r.sc}/${mx}<select id="gs${i}" style="border-color:${r.sid?'var(--bd)':'var(--bad)'}"><option value="">تجاهل</option>${GS.map(s=>`<option value="${s.id}" ${s.id==r.sid?'selected':''}>${H(s.name)}</option>`).join('')}</select></div>`).join('')}<label style="display:block;margin:8px 0"><input type="checkbox" id="gab" style="width:auto"> سجّل "غائب" للطلاب اللي مش في الملف</label><button onclick="gSend()">إرسال الدرجات</button></div>`;
+}
+async function gSend(){
+  const{ex,mx}=GX,b=Date.now(),used=new Set(),g=+$('#gg').value,rows=[];
+  for(let i=0;i<GRW.length;i++){const sid=$('#gs'+i).value;if(!sid||used.has(sid))continue;used.add(sid);rows.push({student_id:sid,exam:ex,score:GRW[i].sc,max:mx,batch:b,grade:g})}
+  if($('#gab').checked)GS.forEach(s=>{if(!used.has(s.id))rows.push({student_id:s.id,exam:ex,absent:true,max:mx,batch:b,grade:g})});
+  const n=await R('staff_add_grades',{p_rows:rows});T('تم إرسال '+n+' درجة');$('#gp').innerHTML='';gList();
+}
+async function gList(){
+  const L=await R('staff_batches');
+  $('#gl').innerHTML=L.map(v=>`<div class="c"><b>${H(v.exam)}</b> <small>${GR[v.grade]} — ${v.n} طالب</small><button class="bad" onclick="gDel(${+v.batch})">حذف الدرجات دي</button></div>`).join('');
+}
+async function gDel(b){await R('staff_del_batch',{p_batch:b});T('تم الحذف');gList()}
+
+/* ---------- المشرفين ---------- */
+async function vSup(){
+  const L=await R('staff_list');
+  $('#v').innerHTML=`<div class="c"><b>إضافة مشرف</b><input id="sn" placeholder="اسم المشرف"><input id="sp" placeholder="رقم التليفون" inputmode="tel"><div class="row"><input id="sk" placeholder="كلمة السر"><button class="g" onclick="$('#sk').value=code()">توليد</button></div><input id="mp" type="password" placeholder="كلمة سر المشرف الأساسي (للتأكيد)" autocomplete="off" autocapitalize="off"><button onclick="addSup()">حفظ المشرف</button><small>لو كتبت رقم مشرف موجود، بتتغيّر كلمة سره.</small></div>`+(L.filter(m=>!m.main).map(m=>`<div class="c"><b>${H(m.name)}</b> <small>${H(m.phone)}</small><button class="bad" onclick="delSup('${m.id}')">حذف</button></div>`).join('')||'<div class="c">لسه مفيش مشرفين تانيين</div>');
+}
+async function addSup(){
+  const p=num($('#sp').value),n=$('#sn').value.trim(),k=dg($('#sk').value.trim());
+  if(!p||!n||!k)return T('كمّل كل البيانات');
+  const j=await R('staff_add_staff',{p_main_pass:dg($('#mp').value.trim()),p_name:n,p_phone:p,p_pass:k});
+  if(j.error)return T(j.error);T('تم إضافة المشرف');vSup();
+}
+async function delSup(id){await R('staff_del_staff',{p_id:id});T('تم الحذف');vSup()}
+
+/* ---------- الطالب / ولي الأمر ---------- */
+async function stu(){
+  const d=await R('student_home'),s=d.me,hs=d.homework,an=d.announcements,gs=d.grades,cs=d.comments;me.s=s;
+  app.innerHTML=`<nav><b>أهلاً ${H(s.name)}</b><button class="g" onclick="logout()">خروج</button></nav>
+<div class="c"><b>ملفي</b><p>${H(s.name)} — ${GR[s.grade]}<br>تليفون: <span dir="ltr">+${H(s.phone)}</span>${s.parent_phone?'<br>ولي الأمر: <span dir="ltr">+'+H(s.parent_phone)+'</span>':''}</p></div>
+${an.map(a=>`<div class="al ${a.type=='n'?'gn':''}"><b>${a.type=='n'?'رسالة من المدرس':'⚠️ تنبيه مهم'}</b><p>${H(a.text)}</p>${att(a.files)}</div>`).join('')}
+${gs.map(g=>`<div class="gc" style="background:${g.absent?'#475569':gcol(g.score,g.max)}"><b>${H(g.exam)}</b><div style="font-size:1.8rem;font-weight:700">${g.absent?'غائب':g.score+' من '+g.max}</div></div>`).join('')}
+<div class="c"><b>الواجبات</b>${hs.map(h=>`<div class="h"><b>${H(h.title)}</b>${att(h.files)}</div>`).join('')||'<p>مفيش واجبات لسه</p>'}</div>
+<div class="c row"><div class="cnt"><span>${s.absent}</span>مرات غياب</div><div class="cnt"><span>${s.unpaid}</span>حصص لم تُدفع</div></div>
+<div class="c"><b>تعليق</b><select id="sh"><option value="">تعليق عام</option>${hs.map(h=>`<option>${H(h.title)}</option>`).join('')}</select><textarea id="cm" rows="3" placeholder="اكتب تعليقك أو سؤالك"></textarea>${FILE_IN('cf')}<button onclick="sendC()">إرسال</button>${cs.map(c=>`<div class="h"><p>${H(c.text)}</p>${att(c.files)}${c.reply?`<p class="rp">رد المدرس: ${H(c.reply)}</p>`:''}${att(c.rfiles)}</div>`).join('')}</div>`;
+  loadAt();
+}
+async function sendC(){
+  const v=$('#cm').value.trim(),files=await upl('cf');if(!v&&!files.length)return;
+  await R('student_comment',{p_text:v,p_hw:$('#sh').value,p_files:files});T('تم الإرسال');stu();
+}
+</script></body></html>
